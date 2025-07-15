@@ -7,11 +7,25 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import time
 import random
+import tempfile
+import shutil
 
 def get_chrome_driver():
-    options = Options()
+    temp_profile = tempfile.mkdtemp(prefix="selenium-profile-")
+    options = webdriver.ChromeOptions()
+    for arg in [
+        "--headless",
+        "--no-sandbox",
+        "--disable-dev-shm-usage",
+        "--disable-gpu",
+        "--disable-extensions",
+        "--disable-infobars"
+    ]:
+        options.add_argument(arg)
+    options.add_argument(f"--user-data-dir={temp_profile}")
     # 如果想讓視窗保持打開，別用 headless；也可加 detach 讓程式結束後不關瀏覽器
     options.add_experimental_option('excludeSwitches', ['enable-logging'])
+    service = Service(executable_path="/usr/bin/chromedriver")
 
     driver = webdriver.Chrome(service=Service(), options=options)
     driver.get("https://user.lifebee.tech/#/auth/instance-code")

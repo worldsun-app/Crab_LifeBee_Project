@@ -50,5 +50,5 @@ if __name__ == "__main__":
 
     # 每 5 分鐘執行一次
     scheduler = BlockingScheduler()
-    scheduler.add_job(fetch_and_compare, 'interval', minutes=0.5)
+    scheduler.add_job(fetch_and_compare, 'interval', minutes=5)
     scheduler.start()
