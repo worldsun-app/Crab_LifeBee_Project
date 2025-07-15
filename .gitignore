@@ -9,4 +9,9 @@ wheels/
 # Virtual environments
 .venv
 
+# environment
 .env
+
+# uv
+uv.lock
+.python-version
