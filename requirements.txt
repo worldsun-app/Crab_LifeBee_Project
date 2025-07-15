@@ -2,7 +2,6 @@ apscheduler>=3.11.0
 beautifulsoup4>=4.13.4
 blinker==1.4.0
 by>=0.0.7
-chromedrivermanager>=0.0.1
 datetime>=5.5
 deepdiff>=8.5.0
 options>=1.4.10
