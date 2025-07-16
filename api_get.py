@@ -28,6 +28,8 @@ def fetch_and_compare():
     resp.raise_for_status()
     new_data = resp.json()
 
+    print("API 回應:", json.dumps(new_data, indent=2, ensure_ascii=False))
+
     # 2. 第一次只存不比對
     if prev_data is None:
         prev_data = new_data
@@ -42,7 +44,7 @@ def fetch_and_compare():
         prev_data = new_data
     else:
         print("API 無變動。")
-        send_telegram("✅ API 無變動。")
+        # send_telegram("✅ API 無變動。")
 
 if __name__ == "__main__":
     # 啟動時立刻執行一次
@@ -50,5 +52,5 @@ if __name__ == "__main__":
 
     # 每 5 分鐘執行一次
     scheduler = BlockingScheduler()
-    scheduler.add_job(fetch_and_compare, 'interval', minutes=5)
+    scheduler.add_job(fetch_and_compare, 'interval', minutes=0.5)
     scheduler.start()

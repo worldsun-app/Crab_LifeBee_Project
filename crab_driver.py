@@ -19,7 +19,9 @@ def get_chrome_driver():
         "--disable-dev-shm-usage",
         "--disable-gpu",
         "--disable-extensions",
-        "--disable-infobars"
+        "--disable-infobars",
+        "--disable-software-rasterizer",
+        "--disable-accelerated-2d-canvas"
     ]:
         options.add_argument(arg)
     options.add_argument(f"--user-data-dir={temp_profile}")
