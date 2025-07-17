@@ -43,6 +43,7 @@ def get_content_map(api_json):
         json.dumps(item, sort_keys=True): json.dumps(item, ensure_ascii=False)
         for item in data
     }
+    
 
 def fetch_and_compare(api_json):
     global prev_map
@@ -83,27 +84,38 @@ def fetch_and_compare(api_json):
         print("content 無任何變動。")
 
 
-if __name__ == "__main__":
 
+def job_all():
+    """
+    每次完整流程：
+     1) get_chrome_driver -> (HEADERS, driver)
+     2) message_center 比對
+     3) pending_list 比對
+     4) driver.quit()
+    """
+    print("=== 開始新一輪監控 ===")
     HEADERS, driver = get_chrome_driver()
-    # 定義兩個工作，分別處理 message_center 與 pending-list
-    def job_message_center():
+    try:
+        # 2) 處理 message_center
         print("▶ 執行 message_center 檢查")
         resp = requests.get(API_URL, headers=HEADERS)
         resp.raise_for_status()
-        fetch_and_compare(resp.json())
+        fetch_and_compare(resp.json())  
 
-    def job_pending_list():
+        # 3) 處理 pending-list
         print("▶ 執行 pending-list 檢查")
-        # 這支裡面會自己呼叫 fetch_and_compare()
         get_new_case_driver(driver)
+    finally:
+        print("▶ 本輪結束，關閉瀏覽器")
+        driver.quit()
 
-    # 啟動時先跑一次，確保 prev_map 有被初始化
-    job_message_center()
-    job_pending_list()
 
-    # 建立排程：每 5 分鐘重複執行
+if __name__ == "__main__":
+
+    job_all()
+
+    # 排程：之後每 5 分鐘執行一次
     scheduler = BlockingScheduler()
-    scheduler.add_job(job_message_center, 'interval', minutes=5)
-    scheduler.add_job(job_pending_list,   'interval', minutes=5)
+    scheduler.add_job(job_all, 'interval', minutes=5)
+    print(">>> 排程啟動，每 5 分鐘執行一次，按 Ctrl+C 停止")
     scheduler.start()
