@@ -3,6 +3,7 @@ import requests
 from deepdiff import DeepDiff
 from apscheduler.schedulers.blocking import BlockingScheduler
 from crab_driver import get_chrome_driver
+from crab_new_case import get_new_case_driver
 from dotenv import load_dotenv
 import os
 
@@ -11,9 +12,7 @@ bot_token = os.getenv("Bot_token")
 chat_id = os.getenv("chat_id")
 
 
-HEADERS = get_chrome_driver()
 API_URL = "https://api.lifebee.tech/app/v3/message/center"
-
 prev_map = None
 
 def send_telegram(msg: str):
@@ -22,26 +21,38 @@ def send_telegram(msg: str):
     requests.post(url, json=payload).raise_for_status()
 
 def get_content_map(api_json):
-    """
-    將原始 JSON 的 data list 轉成 { type: content } 的字典
-    """
+    
+    data = api_json.get('data', [])
+    if not data:
+        return {}
+
+    first = data[0]
+    # message-center 格式
+    if 'type' in first and 'content' in first:
+        return { item['type']: item.get('content') for item in data }
+
+    # pending-list 格式
+    if 'id' in first and 'remark' in first:
+        return {
+            # 这里用 id 当 key，也可以用 underwritingNo, pendingNo 等字段
+            str(item['id']): item.get('remark')
+            for item in data
+        }
+
     return {
-        item['type']: item.get('content')
-        for item in api_json.get('data', [])
+        json.dumps(item, sort_keys=True): json.dumps(item, ensure_ascii=False)
+        for item in data
     }
 
-def fetch_and_compare():
+def fetch_and_compare(api_json):
     global prev_map
     # 1. 呼叫 API
-    resp = requests.get(API_URL, headers=HEADERS)
-    resp.raise_for_status()
-    new_data = resp.json()
 
-    new_map = get_content_map(new_data)
+    new_map = get_content_map(api_json)
 
     # 2. 第一次只存不比對
     if prev_map is None:
-        prev_map = new_data
+        prev_map = new_map
         print("第一次抓取完成，暫存結果。")
         return
     
@@ -72,23 +83,27 @@ def fetch_and_compare():
         print("content 無任何變動。")
 
 
-    # 3. 用 DeepDiff 精確找差異
-    # diff_full = DeepDiff(prev_data, new_data, ignore_order=True)
-    # print("完整 diff：", diff_full)
-    # diff = DeepDiff(prev_data, new_data, ignore_order=True, include_paths=["root['data'][*]['content']"])
-    # if diff_full:
-    #     print("偵測到差異：", diff_full)
-    #     send_telegram(f"🔔 有更新！差異內容：\n```json\n{json.dumps(diff_full, indent=2, ensure_ascii=False)}```")
-    #     prev_data = new_data
-    # else:
-    #     print("API 無變動。")
-    #     # send_telegram("✅ API 無變動。")
-
 if __name__ == "__main__":
-    # 啟動時立刻執行一次
-    fetch_and_compare()
 
-    # 每 5 分鐘執行一次
+    HEADERS, driver = get_chrome_driver()
+    # 定義兩個工作，分別處理 message_center 與 pending-list
+    def job_message_center():
+        print("▶ 執行 message_center 檢查")
+        resp = requests.get(API_URL, headers=HEADERS)
+        resp.raise_for_status()
+        fetch_and_compare(resp.json())
+
+    def job_pending_list():
+        print("▶ 執行 pending-list 檢查")
+        # 這支裡面會自己呼叫 fetch_and_compare()
+        get_new_case_driver(driver)
+
+    # 啟動時先跑一次，確保 prev_map 有被初始化
+    job_message_center()
+    job_pending_list()
+
+    # 建立排程：每 5 分鐘重複執行
     scheduler = BlockingScheduler()
-    scheduler.add_job(fetch_and_compare, 'interval', minutes=10)
+    scheduler.add_job(job_message_center, 'interval', minutes=5)
+    scheduler.add_job(job_pending_list,   'interval', minutes=5)
     scheduler.start()

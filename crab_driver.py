@@ -104,5 +104,4 @@ def get_chrome_driver():
     
     headers = dict(api_request.headers)
 
-    driver.quit()
-    return headers
+    return headers, driver
