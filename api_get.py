@@ -134,6 +134,6 @@ if __name__ == "__main__":
 
     # 排程：之後每 5 分鐘執行一次
     scheduler = BlockingScheduler()
-    scheduler.add_job(job_all, 'interval', minutes=10)
+    scheduler.add_job(job_all, 'interval', minutes=60)
     print(">>> 排程啟動，每 10 分鐘執行一次，按 Ctrl+C 停止")
     scheduler.start()
