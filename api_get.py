@@ -1,4 +1,4 @@
-import json
+import json, time, traceback
 import requests
 from apscheduler.schedulers.blocking import BlockingScheduler
 from crab_driver import get_chrome_driver
@@ -108,13 +108,34 @@ def job_all():
         print("▶ 本輪結束，關閉瀏覽器")
         driver.quit()
 
+def safe_job_all():
+    """
+    安全入口：若 job_all() 中任意一步出錯，都會重頭跑
+    """
+    attempt = 0
+    while True:
+        attempt += 1
+        try:
+            if attempt > 1:
+                print(f"🔄 重試第 {attempt} 次 job_all()")
+            job_all()
+            break  # 成功跑完就跳出 loop
+        except Exception as e:
+            # 把完整 Traceback 打印出來，方便 debug
+            err = traceback.format_exc()
+            print(f"❌ job_all() 第 {attempt} 次失敗，原因：\n{err}")
+            # 通知你
+            send_telegram(f"⚠️ 監控任務失敗（第 {attempt} 次）：\n```\n{e}\n```，正在自動重啟…")
+            # 等幾秒再重來，避免 rapid-fire
+            time.sleep(5)
+
 
 if __name__ == "__main__":
 
-    job_all()
+    safe_job_all()
 
     # 排程：之後每 5 分鐘執行一次
     scheduler = BlockingScheduler()
-    scheduler.add_job(job_all, 'interval', minutes=5)
-    print(">>> 排程啟動，每 5 分鐘執行一次，按 Ctrl+C 停止")
+    scheduler.add_job(job_all, 'interval', minutes=10)
+    print(">>> 排程啟動，每 10 分鐘執行一次，按 Ctrl+C 停止")
     scheduler.start()
