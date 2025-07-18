@@ -42,7 +42,7 @@ def get_new_case_driver(driver):
             .pause(random.uniform(0.1, 0.3)) \
             .click() \
             .perform()
-        time.sleep(random.uniform(2, 4))
+        time.sleep(random.uniform(5, 10))
         api_request = None
         for req in driver.requests:
             if req.url.startswith("https://api.lifebee.tech/app/v3/underwriting/pending-list"):
