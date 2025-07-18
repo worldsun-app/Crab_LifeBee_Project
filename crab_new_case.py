@@ -1,18 +1,11 @@
-from seleniumwire import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
-from crab_driver import get_chrome_driver
 
 import time
 import random
-import tempfile
-import shutil
 import json
-from urllib.parse import urlparse
 
 def get_new_case_driver(driver):
     from api_get import fetch_and_compare
@@ -49,10 +42,7 @@ def get_new_case_driver(driver):
             .perform()
         time.sleep(random.uniform(2, 4))
         for req in driver.requests:
-            # parsed = urlparse(req.url)
-            # parsed.path 就是 "/app/v3/underwriting/pending-list"
             if req.url.startswith("https://api.lifebee.tech/app/v3/underwriting/pending-list"):
-            # if parsed.path.endswith("/app/v3/underwriting/pending-list"):
                 api_request = req
                 break
             else:

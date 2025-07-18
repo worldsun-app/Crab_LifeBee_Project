@@ -1,6 +1,5 @@
-import json, hashlib, time
+import json
 import requests
-from deepdiff import DeepDiff
 from apscheduler.schedulers.blocking import BlockingScheduler
 from crab_driver import get_chrome_driver
 from crab_new_case import get_new_case_driver
