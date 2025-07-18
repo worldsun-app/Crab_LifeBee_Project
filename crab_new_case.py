@@ -28,6 +28,8 @@ def get_new_case_driver(driver):
 
     # 逐一點擊
     for idx in range(count):
+        driver.requests.clear()
+        # 等 tbody 本身出現
         tbody = wait.until(EC.presence_of_element_located(
             (By.CSS_SELECTOR, ".ant-table-tbody.ng-star-inserted")
         ))
@@ -41,6 +43,7 @@ def get_new_case_driver(driver):
             .click() \
             .perform()
         time.sleep(random.uniform(2, 4))
+        api_request = None
         for req in driver.requests:
             if req.url.startswith("https://api.lifebee.tech/app/v3/underwriting/pending-list"):
                 api_request = req
@@ -52,10 +55,10 @@ def get_new_case_driver(driver):
         text     = raw_body.decode('utf-8')
         api_json = json.loads(text)
         fetch_and_compare(api_json)
-        backup_button = wait.until(EC.element_to_be_clickable(
+        close_button = wait.until(EC.element_to_be_clickable(
             (By.CSS_SELECTOR,'.anticon.anticon-close.ng-star-inserted')
             ))
-        backup_button.click()
+        close_button.click()
         time.sleep(random.uniform(2, 4))
     driver.quit()
 
