@@ -124,8 +124,6 @@ def safe_job_all():
             # 把完整 Traceback 打印出來，方便 debug
             err = traceback.format_exc()
             print(f"❌ job_all() 第 {attempt} 次失敗，原因：\n{err}")
-            # 通知你
-            send_telegram(f"⚠️ 監控任務失敗（第 {attempt} 次）：\n```\n{e}\n```，正在自動重啟…")
             # 等幾秒再重來，避免 rapid-fire
             time.sleep(5)
 
