@@ -6,18 +6,42 @@ from crab_new_case import get_new_case_driver
 from dotenv import load_dotenv
 import os
 
-load_dotenv()
+load_dotenv(override=True)
 bot_token = os.getenv("Bot_token")
-chat_id = os.getenv("chat_id")
 
 
 API_URL = "https://api.lifebee.tech/app/v3/message/center"
 prev_map = None
+def load_ids(env_key: str):
+    raw = os.getenv(env_key, "").strip()
+    if not raw:
+        return []
+    # 先嘗試 JSON 格式
+    try:
+        val = json.loads(raw)
+    except json.JSONDecodeError:
+        # 若不是 JSON，就用逗號分隔
+        val = [x.strip() for x in raw.split(",") if x.strip()]
+    # 統一轉成 list[str]
+    if isinstance(val, (str, int)):
+        val = [val]
+    return [str(x) for x in val]
 
-def send_telegram(msg: str):
-    url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-    payload = {"chat_id": chat_id, "text": msg}
-    requests.post(url, json=payload).raise_for_status()
+chat_id = load_ids("chat_id")
+
+def send_telegram(msg: str, chat_ids=None):
+    ids = chat_ids or chat_id
+    if isinstance(ids, (str, int)):
+        ids = [str(ids)]
+    for cid in ids:
+        try:
+            requests.post(
+                f"https://api.telegram.org/bot{bot_token}/sendMessage",
+                json={"chat_id": cid, "text": msg},
+                timeout=10
+            ).raise_for_status()
+        except Exception as e:
+            print(f"[TG Error] {cid}: {e}")
 
 def get_content_map(api_json):
     
@@ -84,6 +108,7 @@ def fetch_and_compare(api_json):
 
 
 
+
 def job_all():
     """
     每次完整流程：
@@ -134,6 +159,6 @@ if __name__ == "__main__":
 
     # 排程：之後每 5 分鐘執行一次
     scheduler = BlockingScheduler()
-    scheduler.add_job(job_all, 'interval', minutes=60)
+    scheduler.add_job(job_all, 'interval', minutes=10)
     print(">>> 排程啟動，每 10 分鐘執行一次，按 Ctrl+C 停止")
     scheduler.start()
