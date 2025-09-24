@@ -60,7 +60,7 @@ class Monitor:
         self.account = account_config['account']
         self.password = account_config['password']
         self.instance_code = account_config['instance_code'] 
-        self.name = account_config.get('name', self.account) # Use name for logging
+        self.name = account_config['name']  # Use name for logging
         self.interval = interval_minutes * 60
         self.prev_map = None # Each instance has its own prev_map
 
@@ -86,7 +86,7 @@ class Monitor:
                 old = v["old"] or "<無>"
                 new = v["new"] or "<無>"
                 lines.append(f"{t}：\n  舊內容：{old}\n  新內容：{new}")
-            text = f"🔔 [{self.account}] 發現變動：\n" + "\n\n".join(lines)
+            text = f"🔔 [{self.name}] 發現變動：\n" + "\n\n".join(lines)
             print(text)
             send_telegram(text)
             self.prev_map = new_map
