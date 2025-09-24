@@ -8,7 +8,7 @@ import time
 import random
 import tempfile
 
-def get_chrome_driver():
+def get_chrome_driver(account, password, instance_code):
     temp_profile = tempfile.mkdtemp(prefix="selenium-profile-")
     options = webdriver.ChromeOptions()
     for arg in [
@@ -41,9 +41,9 @@ def get_chrome_driver():
         ".input-group.ant-input-affix-wrapper > input"))
     )
     input_el.clear()
-    for ch in "The1Advisor":
+    for ch in instance_code:
         input_el.send_keys(ch)
-        time.sleep(random.uniform(0.1, 0.3))  # 隨機延遲，像人在打字
+        time.sleep(random.uniform(0.1, 0.3))
 
 
     enter_btn = wait.until(
@@ -68,7 +68,7 @@ def get_chrome_driver():
 
 
     time.sleep(random.uniform(2, 4))
-    for field_id, value in [("account", "A2077"), ("password", "A001491")]:
+    for field_id, value in [("account", account), ("password", password)]:
         el = wait.until(EC.element_to_be_clickable((By.ID, field_id)))
         el.clear()
         for ch in value:
