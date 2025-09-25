@@ -76,9 +76,6 @@ class Monitor:
             old_c = self.prev_map.get(t)
             if old_c != new_c:
                 changes[t] = {"old": old_c, "new": new_c}
-        removed = set(self.prev_map) - set(new_map)
-        for t in removed:
-            changes[t] = {"old": self.prev_map[t], "new": None}
 
         if changes:
             lines = []
