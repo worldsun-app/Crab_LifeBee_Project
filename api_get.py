@@ -62,33 +62,35 @@ class Monitor:
         self.instance_code = account_config['instance_code'] 
         self.name = account_config['name']  # Use name for logging
         self.interval = interval_minutes * 60
-        self.prev_map = None # Each instance has its own prev_map
+        self.prev_maps = {} # Use a dict to store maps for different sources
 
-    def fetch_and_compare(self, api_json):
+    def fetch_and_compare(self, api_json, source_key):
         new_map = get_content_map(api_json)
-        if self.prev_map is None:
-            self.prev_map = new_map
-            print(f"[{self.name}] 第一次抓取完成，暫存結果。")
+        prev_map = self.prev_maps.get(source_key)
+
+        if prev_map is None:
+            self.prev_maps[source_key] = new_map
+            print(f"[{self.name}][{source_key}] 第一次抓取完成，暫存結果。")
             return
 
         changes = {}
         for t, new_c in new_map.items():
-            old_c = self.prev_map.get(t)
+            old_c = prev_map.get(t)
             if old_c != new_c:
                 changes[t] = {"old": old_c, "new": new_c}
 
         if changes:
             lines = []
             for t, v in changes.items():
-                old = v["old"] or "<無>"
-                new = v["new"] or "<無>"
+                old = (v["old"] or "<無>").replace('<br>', '\n')
+                new = (v["new"] or "<無>").replace('<br>', '\n')
                 lines.append(f"{t}：\n  舊內容：{old}\n  新內容：{new}")
-            text = f"🔔 [{self.name}] 發現變動：\n" + "\n\n".join(lines)
+            text = f"🔔 [{self.name}][{source_key}] 發現變動：\n" + "\n\n".join(lines)
             print(text)
             send_telegram(text)
-            self.prev_map = new_map
+            self.prev_maps[source_key] = new_map
         else:
-            print(f"[{self.name}] content 無任何變動。")
+            print(f"[{self.name}][{source_key}] content 無任何變動。")
 
     def job_all(self):
         print(f"=== [{self.name}] 開始新一輪監控 ===")
@@ -97,7 +99,7 @@ class Monitor:
             print(f"▶ [{self.name}] 執行 message_center 檢查")
             resp = requests.get(API_URL, headers=HEADERS)
             resp.raise_for_status()
-            self.fetch_and_compare(resp.json())
+            self.fetch_and_compare(resp.json(), "message_center")
 
             print(f"▶ [{self.name}] 執行 pending-list 檢查")
             # We need to pass 'self' to the function to use the correct 'fetch_and_compare'

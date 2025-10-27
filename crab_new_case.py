@@ -58,7 +58,7 @@ def get_new_case_driver(driver, monitor_instance):
                 raw_body = api_request.response.body
                 text = raw_body.decode('utf-8')
                 api_json = json.loads(text)
-                monitor_instance.fetch_and_compare(api_json)
+                monitor_instance.fetch_and_compare(api_json, "new_case")
             except Exception as e:
                 print(f"錯誤：解碼或解析 API 響應失敗。錯誤訊息: {e}")
         else:
